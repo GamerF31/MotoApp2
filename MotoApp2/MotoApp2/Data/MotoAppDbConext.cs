@@ -5,7 +5,7 @@ namespace MotoApp2.Data
 {
     public class MotoAppDbContext : DbContext
     {
-        public DbSet<Cars> Cars => Set<Cars>();
+        public DbSet<Car> Cars => Set<Car>();
         public DbSet<Customer> Customers => Set<Customer>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

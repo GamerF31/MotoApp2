@@ -1,4 +1,5 @@
 ﻿using MotoApp2.Data;
+using MotoApp2.DataProviders;
 using MotoApp2.Entities;
 using MotoApp2.Entities.Repositories;
 using MotoApp2.Entities.Repositories.Extensions;
@@ -9,11 +10,13 @@ class Program
 {
     static void Main(string[] args)
     {
-        var carsRepository = new SqlRepository<Cars>(new MotoAppDbContext(), CarsAdded);
+        var carsRepository = new SqlRepository<Car>(new MotoAppDbContext(), CarsAdded);
         carsRepository.ItemAdded += sqlRepositoryOnItemAdded;
 
         var customersRepository = new SqlRepository<Customer>(new MotoAppDbContext(), CustomersAdded);
         customersRepository.ItemAdded += sqlRepositoryOnItemAdded2;
+
+        var carsProvider = new CarsProvider(carsRepository);
 
         DefaultCars(carsRepository);
 
@@ -26,6 +29,11 @@ class Program
             Console.WriteLine("2. Add Customers");
             Console.WriteLine("3. Show Cars");
             Console.WriteLine("4. Add Cars");
+            Console.WriteLine("5. Filter Cars by Country");
+            Console.WriteLine("6. Show First N Cars");
+            Console.WriteLine("7. Find Car by ID");
+            Console.WriteLine("8. Show Minimum Car Cost");
+            Console.WriteLine("9. Order Cars by Model");
             Console.WriteLine("\nPress q to quit");
 
             input = Console.ReadLine();
@@ -43,6 +51,37 @@ class Program
                 case "4":
                     AddCars(carsRepository);
                     break;
+                case "5":
+                    Console.Write("Enter country: ");
+                    string country = Console.ReadLine();
+                    var filtered = carsProvider.FilterByCountry(country);
+                    PrintCars(filtered);
+                    break;
+                case "6":
+                    Console.Write("How many cars? ");
+                    if (int.TryParse(Console.ReadLine(), out int count))
+                    {
+                        var taken = carsProvider.TakeCars(count);
+                        PrintCars(taken);
+                    }
+                    else Console.WriteLine("Invalid number.");
+                    break;
+                case "7":
+                    Console.Write("Enter car ID: ");
+                    if (int.TryParse(Console.ReadLine(), out int id))
+                    {
+                        var car = carsProvider.GetById(id);
+                        Console.WriteLine(car != null ? car.ToString() : "Car not found.");
+                    }
+                    else Console.WriteLine("Invalid ID.");
+                    break;
+                case "8":
+                    Console.WriteLine($"Minimum car cost: {carsProvider.GetMinCost()}");
+                    break;
+                case "9":
+                    var ordered = carsProvider.OrderByModel();
+                    PrintCars(ordered);
+                    break;
                 default:
                     if (input != "q")
                         Console.WriteLine("Wrong input, Try again");
@@ -51,7 +90,7 @@ class Program
         } while (input != "q");
     }
 
-    static void CarsAdded(Cars item)
+    static void CarsAdded(Car item)
     {
         Console.WriteLine($"{item.Model} added");
         WriteToAuditFile($"{item.Model} added to repository");
@@ -63,7 +102,7 @@ class Program
         WriteToAuditFile($"{item.Name} {item.Surname} added to repository");
     }
 
-    static void sqlRepositoryOnItemAdded(object? sender, Cars e)
+    static void sqlRepositoryOnItemAdded(object? sender, Car e)
     {
         Console.WriteLine($"Cars added => {e.Model} from {sender?.GetType().Name}");
     }
@@ -73,20 +112,35 @@ class Program
         Console.WriteLine($"Cars added => {e.Name} {e.Surname} from {sender?.GetType().Name}");
     }
 
-    static void DefaultCars(IRepository<Cars> carsRepository)
+    static void DefaultCars(IRepository<Car> carsRepository)
     {
         var defaultCars = new[]
         {
-            new Cars { Model = "Audi", Year = 2018, Country = "Germany"},
-            new Cars { Model = "Ford Focus", Year = 2009, Country = "Sweden"},
-            new Cars { Model = "Golf", Year = 2011, Country = "Italy"},
-            new Cars { Model = "Fiat", Year = 2012, Country = "Poland"},
-            new Cars { Model = "Opel Astra", Year = 2017, Country = "Spain"}
-        };
+            new Car { Model = "Audi", Year = 2018, Country = "Germany", StandardCost = 21000M },
+            new Car { Model = "Ford Focus", Year = 2009, Country = "Sweden", StandardCost = 8700M },
+            new Car { Model = "Golf", Year = 2011, Country = "Italy", StandardCost = 11000M },
+            new Car { Model = "Fiat", Year = 2012, Country = "Poland", StandardCost = 7500M },
+            new Car { Model = "Opel Astra", Year = 2017, Country = "Spain", StandardCost = 15000M },
+            new Car { Model = "Toyota Corolla", Year = 2019, Country = "Japan", StandardCost = 18500M },
+            new Car { Model = "Peugeot 208", Year = 2015, Country = "France", StandardCost = 9700M },
+            new Car { Model = "BMW 3 Series", Year = 2020, Country = "Germany", StandardCost = 28000M },
+            new Car { Model = "Tesla Model 3", Year = 2021, Country = "USA", StandardCost = 35000M },
+            new Car { Model = "Lada Vesta", Year = 2018, Country = "Russia", StandardCost = 6400M },
+            new Car { Model = "Volvo XC60", Year = 2016, Country = "Sweden", StandardCost = 22500M },
+            new Car { Model = "Renault Clio", Year = 2014, Country = "France", StandardCost = 8400M },
+            new Car { Model = "Hyundai i30", Year = 2019, Country = "South Korea", StandardCost = 14000M },
+            new Car { Model = "Mazda 3", Year = 2017, Country = "Japan", StandardCost = 16000M },
+            new Car { Model = "Seat Leon", Year = 2015, Country = "Spain", StandardCost = 10200M },
+            new Car { Model = "Skoda Octavia", Year = 2018, Country = "Czech Republic", StandardCost = 13200M },
+            new Car { Model = "Chevrolet Spark", Year = 2013, Country = "USA", StandardCost = 5800M },
+            new Car { Model = "Kia Ceed", Year = 2020, Country = "South Korea", StandardCost = 15300M },
+            new Car { Model = "Alfa Romeo Giulietta", Year = 2016, Country = "Italy", StandardCost = 17200M },
+            new Car { Model = "Dacia Duster", Year = 2021, Country = "Romania", StandardCost = 12500M }
+};
         carsRepository.AddBatch(defaultCars); 
     }
 
-    static void AddCars(IRepository<Cars> carsRepository)
+    static void AddCars(IRepository<Car> carsRepository)
     {
         Console.Write("Enter Car Model: ");
         string model = Console.ReadLine();
@@ -98,11 +152,19 @@ class Program
             Console.WriteLine("Invalid Year, Please enter a valid year");
             return;
         }
-        var newCar = new Cars
+        Console.Write("Enter Car Cost: ");
+        if (!decimal.TryParse(Console.ReadLine(), out decimal cost) || cost < 0)
+        {
+            Console.WriteLine("Invalid Cost, Please enter a valid value");
+            return;
+        }
+
+        var newCar = new Car
         {
             Model = model,
             Year = year,
-            Country = country
+            Country = country,
+            StandardCost = cost
         };
         carsRepository.AddBatch(new[] { newCar});
         Console.WriteLine("Car Added");
@@ -121,7 +183,7 @@ class Program
             return;
         }
 
-        var newCustomer = new Customer { Name = name, Surname = surname, Age = age, };
+        var newCustomer = new Customer { Name = name, Surname = surname, Age = age};
         customerRepository.AddBatch(new[] {newCustomer});
         Console.WriteLine("Customer Added");
     }
@@ -148,6 +210,19 @@ class Program
             {
                 Console.WriteLine(item);
             }
+        }
+    }
+    static void PrintCars(List<Car> cars)
+    {
+        if (!cars.Any())
+        {
+            Console.WriteLine("No cars found.");
+            return;
+        }
+
+        foreach (var car in cars)
+        {
+            Console.WriteLine(car);
         }
     }
 }
