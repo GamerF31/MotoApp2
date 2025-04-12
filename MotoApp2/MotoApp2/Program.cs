@@ -137,8 +137,9 @@ class Program
             new Car { Model = "Alfa Romeo Giulietta", Year = 2016, Country = "Italy", StandardCost = 17200M },
             new Car { Model = "Dacia Duster", Year = 2021, Country = "Romania", StandardCost = 12500M }
 };
-        carsRepository.AddBatch(defaultCars); 
+        carsRepository.AddBatch(defaultCars);
     }
+
 
     static void AddCars(IRepository<Car> carsRepository)
     {
@@ -166,7 +167,7 @@ class Program
             Country = country,
             StandardCost = cost
         };
-        carsRepository.AddBatch(new[] { newCar});
+        carsRepository.AddBatch(new[] { newCar });
         Console.WriteLine("Car Added");
     }
 
@@ -183,8 +184,8 @@ class Program
             return;
         }
 
-        var newCustomer = new Customer { Name = name, Surname = surname, Age = age};
-        customerRepository.AddBatch(new[] {newCustomer});
+        var newCustomer = new Customer { Name = name, Surname = surname, Age = age };
+        customerRepository.AddBatch(new[] { newCustomer });
         Console.WriteLine("Customer Added");
     }
 
