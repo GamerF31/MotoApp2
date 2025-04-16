@@ -268,7 +268,7 @@ class Program
         if (!File.Exists("CarsAndCustomers.xml"))
         {
             Console.WriteLine("XML file not found.");
-            return new List<Car>(); // Zwróć pustą listę, jeśli plik nie istnieje
+            return new List<Car>(); 
         }
 
         var document = XDocument.Load("CarsAndCustomers.xml");
