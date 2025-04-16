@@ -5,6 +5,7 @@ using MotoApp2.Entities.Repositories;
 using MotoApp2.Entities.Repositories.Extensions;
 using System;
 using System.IO;
+using System.Xml.Linq;
 
 class Program
 {
@@ -20,6 +21,10 @@ class Program
 
         DefaultCars(carsRepository);
 
+        CreateToXml(carsRepository.GetAll(), customersRepository.GetAll());
+
+        QueryToXml();
+
         string input;
         do
         {
@@ -34,6 +39,7 @@ class Program
             Console.WriteLine("7. Find Car by ID");
             Console.WriteLine("8. Show Minimum Car Cost");
             Console.WriteLine("9. Order Cars by Model");
+            Console.WriteLine("10. Import Cars from XML");
             Console.WriteLine("\nPress q to quit");
 
             input = Console.ReadLine();
@@ -82,12 +88,21 @@ class Program
                     var ordered = carsProvider.OrderByModel();
                     PrintCars(ordered);
                     break;
+                case "10":
+                    var carsXml = QueryToXml();
+                    foreach(var car in carsXml)
+                    {
+                        Console.WriteLine(car);
+
+                    }
+                    break;
                 default:
                     if (input != "q")
                         Console.WriteLine("Wrong input, Try again");
                     break;
             }
         } while (input != "q");
+        CreateToXml(carsRepository.GetAll(), customersRepository.GetAll());
     }
 
     static void CarsAdded(Car item)
@@ -169,6 +184,7 @@ class Program
         };
         carsRepository.AddBatch(new[] { newCar });
         Console.WriteLine("Car Added");
+        CreateToXml(carsRepository.GetAll(), new List<Customer>());
     }
 
     static void AddCustomers(IRepository<Customer> customerRepository)
@@ -187,6 +203,7 @@ class Program
         var newCustomer = new Customer { Name = name, Surname = surname, Age = age };
         customerRepository.AddBatch(new[] { newCustomer });
         Console.WriteLine("Customer Added");
+        CreateToXml(new List<Car>(), customerRepository.GetAll());
     }
 
 
@@ -226,4 +243,45 @@ class Program
             Console.WriteLine(car);
         }
     }
+    
+    static void CreateToXml(IEnumerable<Car> cars, IEnumerable<Customer> customers)
+    {
+        var document = new XDocument(
+            new XElement("Data",
+                new XElement("Cars",
+                    cars.Select(car => new XElement("Car",
+                        new XAttribute("Model", car.Model),
+                        new XAttribute("Year", car.Year),
+                        new XAttribute("Country", car.Country),
+                        new XAttribute("Cost", car.StandardCost)))),
+                new XElement("Customers",
+                customers.Select(customer => new XElement("Customer",
+                    new XAttribute("Name", customer.Name),
+                    new XAttribute("Surname", customer.Surname),
+                    new XAttribute("Age", customer.Age))))
+                ));
+        document.Save("CarsAndCustomers.xml");
+    }
+
+    static List<Car> QueryToXml()
+    {
+        if (!File.Exists("CarsAndCustomers.xml"))
+        {
+            Console.WriteLine("XML file not found.");
+            return new List<Car>(); // Zwróć pustą listę, jeśli plik nie istnieje
+        }
+
+        var document = XDocument.Load("CarsAndCustomers.xml");
+        var cars = document.Element("Data")?.Element("Cars")?.Elements("Car")
+            .Select(x => new Car
+            {
+                Model = x.Attribute("Model")?.Value,
+                Year = int.Parse(x.Attribute("Year")?.Value),
+                Country = x.Attribute("Country")?.Value,
+                StandardCost = decimal.Parse(x.Attribute("Cost")?.Value)
+            }).ToList();
+
+        return cars;
+    }
+
 }
