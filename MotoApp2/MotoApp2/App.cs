@@ -23,84 +23,106 @@ namespace MotoApp2
             _customersRepository = customersRepository;
             _carsProvider = carsProvider;
         }
-
+        public enum MenuOption
+        {
+            ShowCustomers = 1,
+            AddCustomers = 2,
+            ShowCars = 3,
+            AddCars = 4,
+            FilterCarsByCountry = 5,
+            ShowFirstNCars = 6,
+            FindCarById = 7,
+            ShowMinCarCost = 8,
+            OrderCarsByModel = 9,
+            ImportCarsFromXml = 10,
+            EditCarById = 11,
+            DeleteCarById = 12
+        }
         public void Run()
         {
             string input;
             do
             {
                 Console.WriteLine("\nCustomer View");
-                Console.WriteLine("1. Show Customers");
-                Console.WriteLine("2. Add Customers");
-                Console.WriteLine("3. Show Cars");
-                Console.WriteLine("4. Add Cars");
-                Console.WriteLine("5. Filter Cars by Country");
-                Console.WriteLine("6. Show First N Cars");
-                Console.WriteLine("7. Find Car by ID");
-                Console.WriteLine("8. Show Minimum Car Cost");
-                Console.WriteLine("9. Order Cars by Model");
-                Console.WriteLine("10. Import Cars from XML");
-                Console.WriteLine("11.Edit Car by ID");
-                Console.WriteLine("12.Delete Car by ID");
+                Console.WriteLine($"{(int)MenuOption.ShowCustomers}. Show Customers");
+                Console.WriteLine($"{(int)MenuOption.AddCustomers}. Add Customers");
+                Console.WriteLine($"{(int)MenuOption.ShowCars}. Show Cars");
+                Console.WriteLine($"{(int)MenuOption.AddCars}. Add Cars");
+                Console.WriteLine($"{(int)MenuOption.FilterCarsByCountry}. Filter Cars by Country");
+                Console.WriteLine($"{(int)MenuOption.ShowFirstNCars}. Show First N Cars");
+                Console.WriteLine($"{(int)MenuOption.FindCarById}. Find Car by ID");
+                Console.WriteLine($"{(int)MenuOption.ShowMinCarCost}. Show Minimum Car Cost");
+                Console.WriteLine($"{(int)MenuOption.OrderCarsByModel}. Order Cars by Model");
+                Console.WriteLine($"{(int)MenuOption.ImportCarsFromXml}. Import Cars from XML");
+                Console.WriteLine($"{(int)MenuOption.EditCarById}. Edit Car by ID");
+                Console.WriteLine($"{(int)MenuOption.DeleteCarById}. Delete Car by ID");
                 Console.WriteLine("\nPress q to quit");
 
                 input = Console.ReadLine();
-                switch (input)
+                if (input == "q") break;
+
+                if (!int.TryParse(input, out int option))
                 {
-                    case "1":
+                    Console.WriteLine("Invalid input, please enter a number.");
+                    continue;
+                }
+
+                switch ((MenuOption)option)
+                {
+                    case MenuOption.ShowCustomers:
                         if (!_customersRepository.GetAll().Any())
                         {
                             Console.WriteLine("Customers repository is empty");
                         }
                         WriteAllToConsole(_customersRepository);
                         break;
-                    case "2":
+                    case MenuOption.AddCustomers:
                         AddCustomer();
                         break;
-                    case "3":
+                    case MenuOption.ShowCars:
                         if (!_carsRepository.GetAll().Any())
                         {
                             DefaultCars(_carsRepository);
                         }
                         WriteAllToConsole(_carsRepository);
                         break;
-                    case "4":
+                    case MenuOption.AddCars:
                         AddCar();
                         break;
-                    case "5":
+                    case MenuOption.FilterCarsByCountry:
                         FilterCarsByCountry();
                         break;
-                    case "6":
+                    case MenuOption.ShowFirstNCars:
                         ShowFirstNCars();
                         break;
-                    case "7":
+                    case MenuOption.FindCarById:
                         FindCarById();
                         break;
-                    case "8":
+                    case MenuOption.ShowMinCarCost:
                         ShowMinCarCost();
                         break;
-                    case "9":
+                    case MenuOption.OrderCarsByModel:
                         OrderCarsByModel();
                         break;
-                    case "10":
+                    case MenuOption.ImportCarsFromXml:
                         var carsXml = QueryToXml();
                         foreach (var car in carsXml)
                         {
                             Console.WriteLine(car);
                         }
                         break;
-                    case "11":
+                    case MenuOption.EditCarById:
                         EditCar();
                         break;
-                    case "12":
+                    case MenuOption.DeleteCarById:
                         DeleteCar();
                         break;
                     default:
-                        if (input != "q")
-                            Console.WriteLine("Wrong input, Try again");
+                        Console.WriteLine("Wrong input, Try again");
                         break;
                 }
             } while (input != "q");
+
             CreateToXml(_carsRepository.GetAll(), _customersRepository.GetAll());
         }
 
@@ -147,9 +169,17 @@ namespace MotoApp2
             string name = Console.ReadLine();
             Console.Write("Customer Surname: ");
             string surname = Console.ReadLine();
-            Console.Write("Customer Age: ");
-            int age = int.Parse(Console.ReadLine());
-
+            int age;
+            while (true)
+            {
+                Console.Write("Enter Car Year: ");
+                string ageInput = Console.ReadLine();
+                if (int.TryParse(ageInput, out age) && age > 18 && age <= 100)
+                {
+                    break;
+                }
+                Console.WriteLine("Invalid input! Please enter a valid age.");
+            }
             var newCustomer = new Customer { Name = name, Surname = surname, Age = age };
             _customersRepository.Add(newCustomer);
             _customersRepository.Save();
@@ -164,10 +194,30 @@ namespace MotoApp2
             string model = Console.ReadLine();
             Console.Write("Enter Car Country: ");
             string country = Console.ReadLine();
-            Console.Write("Enter Car Year: ");
-            int year = int.Parse(Console.ReadLine());
-            Console.Write("Enter Car Cost: ");
-            decimal cost = decimal.Parse(Console.ReadLine());
+            int year;
+            while (true)
+            {
+                Console.Write("Enter Car Year: ");
+                string yearInput = Console.ReadLine();
+                if (int.TryParse(yearInput, out year) && year > 1900 && year <= DateTime.Now.Year)
+                {
+                    break;
+                }
+                Console.WriteLine("Invalid input! Please enter a valid year (e.g. 2022).");
+            }
+
+            decimal cost;
+            while (true)
+            {
+                Console.Write("Enter Car Cost: ");
+                string costInput = Console.ReadLine();
+                cost = decimal.TryParse(costInput, out var parsedCost) ? parsedCost : -1;
+                if (cost >= 0)
+                {
+                    break;
+                }
+                Console.WriteLine("Invalid input! Please enter a valid cost (positive number).");
+            }
 
             var newCar = new Car
             {

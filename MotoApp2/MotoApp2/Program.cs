@@ -24,7 +24,7 @@ class Program
         var dbContext = serviceProvider.GetRequiredService<MotoAppDbContext>();
         dbContext.Database.EnsureCreated();
 
-        var app = serviceProvider.GetService<IApp>();
+        var app = serviceProvider.GetService<IApp>()!;
         app.Run();
     }
 }
